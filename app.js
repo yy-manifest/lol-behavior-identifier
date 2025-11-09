@@ -24,50 +24,146 @@ const CLASS_BASE = {
 };
 // Optional champion overrides to add flavor (extend over time)
 const OVERRIDES = {
-  "LeeSin": {agg:80,risk:80,team:55,ctrl:50,mech:95,adapt:75},
-  "Khazix": {agg:85,risk:80,team:40,ctrl:45,mech:85,adapt:70},
-  "Sejuani":{agg:55,risk:45,team:85,ctrl:85,mech:55,adapt:60},
-  "Evelynn":{agg:82,risk:78,team:40,ctrl:50,mech:82,adapt:65},
-  "Warwick":{agg:60,risk:45,team:60,ctrl:70,mech:55,adapt:55},
-  "Thresh": {agg:58,risk:48,team:90,ctrl:88,mech:68,adapt:66},
-  // ...add more easily later
+  // Assassins / skirmishers
+  "LeeSin":   {agg:86,risk:80,team:55,ctrl:52,mech:92,adapt:74},
+  "Khazix":   {agg:88,risk:80,team:42,ctrl:46,mech:85,adapt:70},
+  "Evelynn":  {agg:82,risk:80,team:40,ctrl:50,mech:84,adapt:66},
+  "Nidalee":  {agg:80,risk:78,team:44,ctrl:52,mech:86,adapt:68},
+  "Rengar":   {agg:90,risk:82,team:38,ctrl:44,mech:80,adapt:64},
+  "Talon":    {agg:86,risk:80,team:42,ctrl:48,mech:82,adapt:68},
+  "Zed":      {agg:88,risk:78,team:42,ctrl:50,mech:88,adapt:66},
+  "Katarina": {agg:84,risk:82,team:40,ctrl:44,mech:90,adapt:66},
+  "Leblanc":  {agg:82,risk:78,team:44,ctrl:52,mech:86,adapt:70},
+  "Sylas":    {agg:80,risk:72,team:52,ctrl:56,mech:82,adapt:76},
+  "Yasuo":    {agg:84,risk:78,team:52,ctrl:54,mech:88,adapt:70},
+  "Yone":     {agg:86,risk:80,team:50,ctrl:54,mech:86,adapt:72},
+  "Kayn":     {agg:84,risk:78,team:50,ctrl:56,mech:84,adapt:78},
+  "Diana":    {agg:80,risk:74,team:52,ctrl:56,mech:80,adapt:68},
+
+  // Tanks / engage
+  "Sejuani":  {agg:58,risk:44,team:86,ctrl:86,mech:56,adapt:60},
+  "JarvanIV": {agg:74,risk:60,team:74,ctrl:72,mech:70,adapt:64},
+  "Vi":       {agg:76,risk:64,team:70,ctrl:66,mech:72,adapt:64},
+  "Nunu":     {agg:60,risk:46,team:80,ctrl:80,mech:56,adapt:62},
+  "Zac":      {agg:64,risk:46,team:84,ctrl:82,mech:62,adapt:64},
+  "Amumu":    {agg:62,risk:46,team:84,ctrl:82,mech:60,adapt:60},
+  "Rell":     {agg:66,risk:48,team:86,ctrl:84,mech:60,adapt:60},
+  "Nautilus": {agg:66,risk:50,team:86,ctrl:84,mech:62,adapt:60},
+  "Leona":    {agg:68,risk:52,team:86,ctrl:84,mech:62,adapt:58},
+  "Malphite": {agg:66,risk:48,team:80,ctrl:78,mech:58,adapt:60},
+  "Ornn":     {agg:58,risk:42,team:82,ctrl:84,mech:56,adapt:60},
+  "Shen":     {agg:56,risk:42,team:86,ctrl:84,mech:56,adapt:64},
+
+  // Enchanters / control supports
+  "Lulu":     {agg:40,risk:38,team:90,ctrl:82,mech:58,adapt:64},
+  "Janna":    {agg:38,risk:36,team:88,ctrl:86,mech:56,adapt:64},
+  "Soraka":   {agg:36,risk:36,team:90,ctrl:82,mech:54,adapt:60},
+  "Nami":     {agg:46,risk:40,team:86,ctrl:80,mech:60,adapt:62},
+  "Karma":    {agg:48,risk:42,team:82,ctrl:80,mech:62,adapt:64},
+  "Morgana":  {agg:54,risk:46,team:78,ctrl:80,mech:62,adapt:62},
+  "Rakan":    {agg:62,risk:50,team:86,ctrl:80,mech:70,adapt:66},
+  "Thresh":   {agg:60,risk:48,team:88,ctrl:88,mech:70,adapt:66},
+  "Bard":     {agg:56,risk:48,team:80,ctrl:84,mech:72,adapt:70},
+
+  // Control mages / artillery
+  "Orianna":  {agg:60,risk:50,team:70,ctrl:82,mech:78,adapt:64},
+  "Azir":     {agg:66,risk:54,team:68,ctrl:80,mech:84,adapt:66},
+  "Viktor":   {agg:58,risk:50,team:68,ctrl:80,mech:76,adapt:64},
+  "Xerath":   {agg:56,risk:48,team:66,ctrl:84,mech:74,adapt:60},
+  "Ziggs":    {agg:54,risk:48,team:66,ctrl:84,mech:74,adapt:62},
+  "Velkoz":   {agg:56,risk:48,team:66,ctrl:84,mech:76,adapt:62},
+  "Anivia":   {agg:54,risk:46,team:70,ctrl:86,mech:74,adapt:60},
+
+  // ADCs
+  "Jinx":     {agg:66,risk:56,team:64,ctrl:74,mech:74,adapt:60},
+  "Ashe":     {agg:58,risk:50,team:70,ctrl:78,mech:70,adapt:60},
+  "Caitlyn":  {agg:62,risk:52,team:64,ctrl:78,mech:74,adapt:60},
+  "Ezreal":   {agg:66,risk:56,team:62,ctrl:70,mech:80,adapt:62},
+  "Kaisa":    {agg:72,risk:60,team:62,ctrl:70,mech:82,adapt:66},
+  "Xayah":    {agg:68,risk:58,team:64,ctrl:70,mech:78,adapt:64},
+  "Draven":   {agg:80,risk:70,team:56,ctrl:62,mech:82,adapt:60},
+  "Samira":   {agg:82,risk:72,team:56,ctrl:62,mech:84,adapt:62},
+  "Aphelios": {agg:66,risk:56,team:62,ctrl:74,mech:86,adapt:60},
+  "Varus":    {agg:62,risk:52,team:64,ctrl:76,mech:74,adapt:60},
+  "KogMaw":   {agg:56,risk:50,team:66,ctrl:78,mech:72,adapt:58},
+  "Tristana": {agg:72,risk:62,team:58,ctrl:66,mech:76,adapt:62},
+
+  // Duelists / split pushers / bruisers
+  "Fiora":    {agg:84,risk:72,team:50,ctrl:62,mech:86,adapt:70},
+  "Camille":  {agg:82,risk:72,team:52,ctrl:64,mech:84,adapt:72},
+  "Jax":      {agg:78,risk:66,team:50,ctrl:60,mech:80,adapt:70},
+  "Darius":   {agg:76,risk:62,team:52,ctrl:60,mech:72,adapt:66},
+  "Renekton": {agg:74,risk:64,team:52,ctrl:60,mech:72,adapt:66},
+  "Aatrox":   {agg:76,risk:64,team:54,ctrl:62,mech:78,adapt:68},
+  "Garen":    {agg:60,risk:50,team:58,ctrl:62,mech:62,adapt:60},
+  "Kennen":   {agg:66,risk:56,team:64,ctrl:76,mech:78,adapt:64},
+  "Jayce":    {agg:70,risk:58,team:58,ctrl:74,mech:80,adapt:66},
+  "Gnar":     {agg:62,risk:52,team:60,ctrl:74,mech:72,adapt:66},
 };
-//Combo Nudges 
+
 function applyRoleWeights(role, vecs){
   const w = ROLE_W[role] || ROLE_W.Jungle;
 
-  // base weighted average
-  const sum = {agg:0,risk:0,team:0,ctrl:0,mech:0,adapt:0};
-  const peak = {agg:0,risk:0,team:0,ctrl:0,mech:0,adapt:0};
+  // Weighted mean & peak per trait
+  const keys = ["agg","risk","team","ctrl","mech","adapt"];
+  const sum = Object.fromEntries(keys.map(k=>[k,0]));
+  const peak = Object.fromEntries(keys.map(k=>[k,0]));
   vecs.forEach(v=>{
-    sum.agg += v.agg*w.agg;   peak.agg = Math.max(peak.agg, v.agg);
-    sum.risk += v.risk*w.risk;peak.risk = Math.max(peak.risk, v.risk);
-    sum.team += v.team*w.team;peak.team = Math.max(peak.team, v.team);
-    sum.ctrl += v.ctrl*w.ctrl;peak.ctrl = Math.max(peak.ctrl, v.ctrl);
-    sum.mech += v.mech*w.mech;peak.mech = Math.max(peak.mech, v.mech);
-    sum.adapt += v.adapt*w.adapt;peak.adapt = Math.max(peak.adapt, v.adapt);
+    keys.forEach(k=>{
+      sum[k]  += v[k]*w[{agg:"agg",risk:"risk",team:"team",ctrl:"ctrl",mech:"mech",adapt:"adapt"}[k]];
+      peak[k]  = Math.max(peak[k], v[k]);
+    });
   });
-  const avg = {};
-  Object.entries(sum).forEach(([k,v]) => avg[k]=Math.round(v/vecs.length));
+  const avg = Object.fromEntries(keys.map(k=>[k, Math.round(sum[k]/vecs.length)]));
 
-  // combo nudges (±0–6) based on composition
-  const tags = vecs.map(v => tagFromVector(v)); // rough tag from baseline
+  // Variance → pushes away from bland middles
+  const variance = Object.fromEntries(keys.map(k=>{
+    const mu = avg[k]/w[{agg:"agg",risk:"risk",team:"team",ctrl:"ctrl",mech:"mech",adapt:"adapt"}[k]];
+    const v  = vecs.reduce((a,x)=>a+Math.pow(x[k]-mu,2),0)/vecs.length;
+    return [k, Math.round(v)];
+  }));
+
+  // Rough class tags inferred from each vector
+  const tags = vecs.map(tagFromVector);
   const counts = countTags(tags);
 
-  // Two+ assassins → push aggression/risk/mech a bit
-  if ((counts.Assassin||0) >= 2){ avg.agg+=4; avg.risk+=4; avg.mech+=3; }
-  // Tank + Catcher/Support vibe → more team/control
-  if ((counts.Tank||0) >= 1 && (counts.Support||0) >= 1){ avg.team+=5; avg.ctrl+=4; }
-  // Marksman + Enchanter feel → control↑ risk↓ a touch
-  if ((counts.Marksman||0) >= 1 && (counts.Support||0) >= 1){ avg.ctrl+=3; avg.risk-=2; }
+  // Composition nudges (±2..7)
+  const nudge = Object.fromEntries(keys.map(k=>[k,0]));
+  if ((counts.Assassin||0) >= 2){ nudge.agg+=5; nudge.risk+=5; nudge.mech+=4; }
+  if ((counts.Tank||0) >= 1 && (counts.Support||0) >= 1){ nudge.team+=6; nudge.ctrl+=5; }
+  if ((counts.Marksman||0) >= 1 && (counts.Support||0) >= 1){ nudge.ctrl+=4; nudge.risk-=3; }
+  if ((counts.Fighter||0) >= 2 && role==="Top"){ nudge.adapt+=4; nudge.ctrl+=3; }
+  if ((counts.Mage||0) >= 2 && role==="Mid"){ nudge.ctrl+=4; nudge.mech+=3; }
 
-  // clamp 0–100
-  for (const k of Object.keys(avg)) avg[k] = Math.max(0, Math.min(100, avg[k]));
-  for (const k of Object.keys(peak)) peak[k] = Math.max(0, Math.min(100, peak[k]));
+  // Non-linear accentuation per role: reward the “right” traits
+  const accent = {
+    "Jungle":  {agg:1.06, risk:1.03, team:1.05, ctrl:1.08, mech:1.04, adapt:1.05},
+    "Support": {agg:0.98, risk:0.98, team:1.10, ctrl:1.10, mech:1.02, adapt:1.04},
+    "Mid":     {agg:1.05, risk:1.03, team:1.00, ctrl:1.06, mech:1.06, adapt:1.03},
+    "Bot":     {agg:1.03, risk:0.99, team:1.04, ctrl:1.06, mech:1.05, adapt:1.02},
+    "Top":     {agg:1.04, risk:1.00, team:1.01, ctrl:1.06, mech:1.04, adapt:1.05},
+  }[role];
 
-  // return both average and peak for archetype logic
-  return { avg, peak, tags, counts };
+  const out = {};
+  keys.forEach(k=>{
+    const boosted = (avg[k] + nudge[k]) * accent[k];
+    // gentle ease-out curve to spread 60–80 into clearer bands
+    out[k] = Math.max(0, Math.min(100, Math.round( 100 * (boosted/100) ** 0.92 )));
+  });
+
+  return { avg: out, peak, variance, tags, counts };
 }
+
+function tagFromVector(v){
+  if (v.mech>=84 && v.agg>=75) return "Assassin";
+  if (v.team>=85 && v.ctrl>=80) return "Support";
+  if (v.ctrl>=80 && v.team>=75 && v.agg<65) return "Tank";
+  if (v.mech>=74 && v.agg>=66) return "Marksman";
+  if (v.ctrl>=72 && v.mech>=72) return "Mage";
+  return "Fighter";
+}
+function countTags(arr){ return arr.reduce((a,t)=>(a[t]=(a[t]||0)+1,a),{}); }
+
 
 function tagFromVector(v){
   // Very rough heuristic to label one of our “classes”
@@ -81,40 +177,61 @@ function tagFromVector(v){
 function countTags(arr){ return arr.reduce((a,t)=>(a[t]=(a[t]||0)+1,a),{}); }
 
 // Updated Archetype 
-function pickArchetype(t, peak={}) {
+function pickArchetype(t, peak={}, counts={}){
   const {agg, ctrl, mech, risk, team, adapt} = t;
   const pM = peak.mech || mech, pA = peak.agg || agg, pC = peak.ctrl || ctrl;
 
-  // High-mech pop-offs or reset champs should trigger reliably
-  if ((pM >= 85 && pA >= 72) || (mech >= 80 && agg >= 70 && risk >= 68)) {
+  // 1) Execution / Assassin band
+  if ((pM>=86 && pA>=74) || (mech>=82 && agg>=72 && risk>=66))
     return ["Daredevil Virtuoso","You live on the highlight reel—bring wards and a witness."];
-  }
-  // Vision & peel captains
-  if ((ctrl >= 73 && team >= 75) || (pC >= 78 && team >= 72)) {
+
+  // 2) Engage/Peel leadership
+  if ((ctrl>=72 && team>=78) || (pC>=78 && team>=74))
     return ["Frontline Captain","You start the fight and still remember the exit."];
-  }
-  // Hook/catch, engage macros (agg+ctrl)
-  if (agg >= 72 && ctrl >= 66) {
+
+  // 3) Playmaking catch
+  if (agg>=72 && ctrl>=66)
     return ["Playmaking Shepherd","You find the angle and escort it to safety."];
-  }
-  // Skirmish chaos enjoyer
-  if (agg >= 74 && risk >= 68) {
+
+  // 4) Skirmish chaos
+  if (agg>=74 && risk>=68)
     return ["Shadow Outplayer","If they’re missing, you’re grinning."];
-  }
-  // Siege brains (control + mechanics, risk low)
-  if (ctrl >= 72 && mech >= 70 && risk <= 60) {
+
+  // 5) Siege brains (poke/zone/control)
+  if (ctrl>=72 && mech>=70 && risk<=60)
     return ["Siege Conductor","You win by paperwork: waves, wards, and warnings."];
-  }
-  // Split pressure fiend (adapt + agg)
-  if (adapt >= 70 && agg >= 70 && ctrl >= 60) {
+
+  // 6) Split pressure
+  if (adapt>=70 && agg>=70 && ctrl>=60)
     return ["Split-Lane Duelist","Side lanes are your diary; you write in towers."];
-  }
-  // Enchanter macro (team + control, low risk)
-  if (team >= 80 && ctrl >= 72 && risk <= 58) {
+
+  // 7) Enchanter macro
+  if (team>=80 && ctrl>=72 && risk<=58)
     return ["Enchanter Architect","Your carries pay rent; you provide infrastructure."];
-  }
+
+  // 8) Bully skirmisher (top/jg fighter cores)
+  if (agg>=72 && mech>=68 && team<=65 && ctrl<=66)
+    return ["Duel Pit Foreman","You tax every river fight and collect with interest."];
+
+  // 9) Pick → Objective machine (vision-first)
+  if (ctrl>=68 && agg>=66 && risk<=66)
+    return ["Objective Broker","You don’t chase kills—you broker them into plates and souls."];
+
+  // 10) Artillery handler (mid/bot poke)
+  if (ctrl>=74 && risk<=58 && mech>=68)
+    return ["Artillery Quartermaster","Zones, slows, and health bars filed under ‘compliance’."];
+
+  // 11) Peel-first guardian (high team, moderate mech)
+  if (team>=78 && risk<=60)
+    return ["Windward Caretaker","You write the invites and bounce the door."];
+
+  // 12) Adaptive tactician (no strong spikes but high pivot)
+  if (adapt>=72 && Math.max(agg,ctrl,team,mech)<=74)
+    return ["Adaptive Tactician","You change the win-con faster than they change wards."];
+
   return ["Calculated Playmaker","You don’t chase fights—you schedule them."];
 }
+
 
 
 // Simple strengths/blind-spots copy
@@ -209,8 +326,9 @@ async function onGo(){
   const role = $("#role").value;
   const mains = [$("#m1").value, $("#m2").value, $("#m3").value];
   const vecs = mains.map(championTraits);
-  const { avg: traits, peak, tags, counts } = applyRoleWeights(role, vecs); 
-  const [arch, quip] = pickArchetype(traits, peak);
+const { avg: traits, peak, counts } = applyRoleWeights(role, vecs);
+const [arch, quip] = pickArchetype(traits, peak, counts);
+
 
   $("#arch").textContent = arch;
   $("#quip").textContent = quip;
