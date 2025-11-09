@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LoL Behavior Identifier</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="nav">
+    <div class="container">
+      <h1>LoL Behavior Identifier</h1>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Pick 3 mains. Meet your gameplay DNA.</h2>
+      <p class="muted">Role → 3 champions (type to search). Data auto-syncs from Riot Data Dragon.</p>
+
+      <div class="grid">
+        <label>Role
+          <select id="role">
+            <option>Jungle</option>
+            <option>Mid</option>
+            <option>Bot</option>
+            <option>Support</option>
+            <option>Top</option>
+          </select>
+        </label>
+
+        <label>Champion #1
+          <input id="m1" list="champions" placeholder="e.g., Lee Sin" />
+        </label>
+        <label>Champion #2
+          <input id="m2" list="champions" placeholder="e.g., Kha'Zix" />
+        </label>
+        <label>Champion #3
+          <input id="m3" list="champions" placeholder="e.g., Sejuani" />
+        </label>
+      </div>
+
+      <datalist id="champions"></datalist>
+
+      <button id="go">Generate Persona</button>
+      <small id="patch" class="muted"></small>
+    </section>
+
+    <section id="result" class="card" hidden>
+      <h3 id="arch"></h3>
+      <p id="quip" class="muted"></p>
+      <p class="meta" id="meta"></p>
+
+      <div id="bars" class="bars"></div>
+
+      <div class="cols">
+        <div>
+          <h4>Strengths</h4>
+          <ul id="strengths"></ul>
+        </div>
+        <div>
+          <h4>Blind Spots</h4>
+          <ul id="blinds"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="container foot">© LoL Behavior Identifier — Banter-first, research-grounded.</footer>
+  <script src="app.js"></script>
+</body>
+</html>
