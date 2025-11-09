@@ -15,14 +15,13 @@ const ROLE_W = {
 
 // Baselines by Riot class tag (Assassin, Fighter, Mage, Marksman, Support, Tank)
 const CLASS_BASE = {
-  Assassin: {agg:80,risk:78,team:45,ctrl:45,mech:82,adapt:65},
-  Fighter:  {agg:70,risk:60,team:55,ctrl:55,mech:65,adapt:70},
-  Mage:     {agg:62,risk:55,team:55,ctrl:68,mech:70,adapt:65},
-  Marksman: {agg:65,risk:55,team:60,ctrl:65,mech:72,adapt:60},
-  Support:  {agg:45,risk:40,team:85,ctrl:80,mech:55,adapt:65},
-  Tank:     {agg:55,risk:40,team:80,ctrl:80,mech:55,adapt:60},
+  Assassin: {agg:84,risk:80,team:44,ctrl:46,mech:84,adapt:66},
+  Fighter:  {agg:72,risk:60,team:56,ctrl:56,mech:66,adapt:71},
+  Mage:     {agg:64,risk:55,team:56,ctrl:70,mech:72,adapt:66},
+  Marksman: {agg:68,risk:57,team:60,ctrl:66,mech:74,adapt:61},
+  Support:  {agg:46,risk:40,team:86,ctrl:82,mech:56,adapt:66},
+  Tank:     {agg:56,risk:40,team:82,ctrl:82,mech:56,adapt:61},
 };
-
 // Optional champion overrides to add flavor (extend over time)
 const OVERRIDES = {
   "LeeSin": {agg:80,risk:80,team:55,ctrl:50,mech:95,adapt:75},
@@ -33,16 +32,90 @@ const OVERRIDES = {
   "Thresh": {agg:58,risk:48,team:90,ctrl:88,mech:68,adapt:66},
   // ...add more easily later
 };
+//Combo Nudges 
+function applyRoleWeights(role, vecs){
+  const w = ROLE_W[role] || ROLE_W.Jungle;
 
-// Archetype picker (top-2 + general shape)
-function pickArchetype(t){
-  const {agg,ctrl,mech,risk,team} = t;
-  if (mech>=80 && agg>=70 && risk>=70) return ["Daredevil Virtuoso","You live on the highlight reel—bring wards and a witness."];
-  if (ctrl>=75 && team>=75)           return ["Frontline Captain","You start the fight and still remember the exit."];
-  if (agg>=75 && ctrl>=65)            return ["Playmaking Shepherd","You find the angle and escort it to safety."];
-  if (agg>=75 && risk>=70)            return ["Shadow Outplayer","If they’re missing, you’re grinning."];
+  // base weighted average
+  const sum = {agg:0,risk:0,team:0,ctrl:0,mech:0,adapt:0};
+  const peak = {agg:0,risk:0,team:0,ctrl:0,mech:0,adapt:0};
+  vecs.forEach(v=>{
+    sum.agg += v.agg*w.agg;   peak.agg = Math.max(peak.agg, v.agg);
+    sum.risk += v.risk*w.risk;peak.risk = Math.max(peak.risk, v.risk);
+    sum.team += v.team*w.team;peak.team = Math.max(peak.team, v.team);
+    sum.ctrl += v.ctrl*w.ctrl;peak.ctrl = Math.max(peak.ctrl, v.ctrl);
+    sum.mech += v.mech*w.mech;peak.mech = Math.max(peak.mech, v.mech);
+    sum.adapt += v.adapt*w.adapt;peak.adapt = Math.max(peak.adapt, v.adapt);
+  });
+  const avg = {};
+  Object.entries(sum).forEach(([k,v]) => avg[k]=Math.round(v/vecs.length));
+
+  // combo nudges (±0–6) based on composition
+  const tags = vecs.map(v => tagFromVector(v)); // rough tag from baseline
+  const counts = countTags(tags);
+
+  // Two+ assassins → push aggression/risk/mech a bit
+  if ((counts.Assassin||0) >= 2){ avg.agg+=4; avg.risk+=4; avg.mech+=3; }
+  // Tank + Catcher/Support vibe → more team/control
+  if ((counts.Tank||0) >= 1 && (counts.Support||0) >= 1){ avg.team+=5; avg.ctrl+=4; }
+  // Marksman + Enchanter feel → control↑ risk↓ a touch
+  if ((counts.Marksman||0) >= 1 && (counts.Support||0) >= 1){ avg.ctrl+=3; avg.risk-=2; }
+
+  // clamp 0–100
+  for (const k of Object.keys(avg)) avg[k] = Math.max(0, Math.min(100, avg[k]));
+  for (const k of Object.keys(peak)) peak[k] = Math.max(0, Math.min(100, peak[k]));
+
+  // return both average and peak for archetype logic
+  return { avg, peak, tags, counts };
+}
+
+function tagFromVector(v){
+  // Very rough heuristic to label one of our “classes”
+  if (v.mech>=80 && v.agg>=75) return "Assassin";
+  if (v.team>=80 && v.ctrl>=78) return "Support";
+  if (v.ctrl>=78 && v.team>=75 && v.agg<65) return "Tank";
+  if (v.mech>=72 && v.agg>=68) return "Marksman";
+  if (v.ctrl>=70 && v.mech>=70) return "Mage";
+  return "Fighter";
+}
+function countTags(arr){ return arr.reduce((a,t)=>(a[t]=(a[t]||0)+1,a),{}); }
+
+// Updated Archetype 
+function pickArchetype(t, peak={}) {
+  const {agg, ctrl, mech, risk, team, adapt} = t;
+  const pM = peak.mech || mech, pA = peak.agg || agg, pC = peak.ctrl || ctrl;
+
+  // High-mech pop-offs or reset champs should trigger reliably
+  if ((pM >= 85 && pA >= 72) || (mech >= 80 && agg >= 70 && risk >= 68)) {
+    return ["Daredevil Virtuoso","You live on the highlight reel—bring wards and a witness."];
+  }
+  // Vision & peel captains
+  if ((ctrl >= 73 && team >= 75) || (pC >= 78 && team >= 72)) {
+    return ["Frontline Captain","You start the fight and still remember the exit."];
+  }
+  // Hook/catch, engage macros (agg+ctrl)
+  if (agg >= 72 && ctrl >= 66) {
+    return ["Playmaking Shepherd","You find the angle and escort it to safety."];
+  }
+  // Skirmish chaos enjoyer
+  if (agg >= 74 && risk >= 68) {
+    return ["Shadow Outplayer","If they’re missing, you’re grinning."];
+  }
+  // Siege brains (control + mechanics, risk low)
+  if (ctrl >= 72 && mech >= 70 && risk <= 60) {
+    return ["Siege Conductor","You win by paperwork: waves, wards, and warnings."];
+  }
+  // Split pressure fiend (adapt + agg)
+  if (adapt >= 70 && agg >= 70 && ctrl >= 60) {
+    return ["Split-Lane Duelist","Side lanes are your diary; you write in towers."];
+  }
+  // Enchanter macro (team + control, low risk)
+  if (team >= 80 && ctrl >= 72 && risk <= 58) {
+    return ["Enchanter Architect","Your carries pay rent; you provide infrastructure."];
+  }
   return ["Calculated Playmaker","You don’t chase fights—you schedule them."];
 }
+
 
 // Simple strengths/blind-spots copy
 function strengths(t){
@@ -136,8 +209,8 @@ async function onGo(){
   const role = $("#role").value;
   const mains = [$("#m1").value, $("#m2").value, $("#m3").value];
   const vecs = mains.map(championTraits);
-  const traits = applyRoleWeights(role, vecs);
-  const [arch, quip] = pickArchetype(traits);
+  const { avg: traits, peak, tags, counts } = applyRoleWeights(role, vecs); 
+  const [arch, quip] = pickArchetype(traits, peak);
 
   $("#arch").textContent = arch;
   $("#quip").textContent = quip;
