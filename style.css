@@ -1,132 +1,100 @@
-/* ===== LoL Behavior Identifier — Barmagly UI rev ===== */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b0f14;
-    --panel: #0f1520;
-    --elev: #121a26;
-    --ink: #e6efff;
-    --muted: #92a0b3;
-    --brand: #7c5cff;    /* indigo-violet */
-    --brand-2: #5ad4ff;  /* cyan accent  */
-    --ok: #3ad97b;
-    --warn: #ffb84d;
-    --danger: #ff6a6a;
-    --stroke: #1c2736;
-    --bar-bg: #182234;
-  }
-}
-* { box-sizing: border-box; }
-html, body { height: 100%; }
-body {
-  margin: 0;
-  font: 15px/1.65 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  color: var(--ink);
-  background:
-    radial-gradient(1000px 600px at 10% -10%, rgba(124,92,255,.18), transparent 60%),
-    radial-gradient(900px 550px at 110% 10%, rgba(90,212,255,.18), transparent 60%),
-    linear-gradient(180deg, #0a0e13, #0b0f14 60%);
-}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LoL Behavior Identifier</title>
+  <meta name="description" content="Pick 3 mains. Meet your gameplay DNA. Banter-first, research-grounded persona reads powered by Riot Data Dragon." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='10' ry='10' fill='%23c8aa6e'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='36' font-family='Georgia' fill='%23101318'%3EL%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="header container">
+    <div class="brand">
+      <div class="brand-badge" aria-hidden="true"></div>
+      <h1>LoL Behavior Identifier</h1>
+    </div>
+    <nav><a href="#wizard">Wizard</a></nav>
+  </header>
 
-/* Layout */
-.container { max-width: 980px; margin: 0 auto; padding: 20px; }
-.header {
-  display: flex; align-items: center; justify-content: space-between;
-  border-bottom: 1px solid var(--stroke); padding: 14px 0;
-}
-.brand { display:flex; gap:10px; align-items:center; }
-.brand-badge {
-  width: 28px; height: 28px; border-radius: 8px;
-  background: linear-gradient(135deg, var(--brand), var(--brand-2));
-  box-shadow: 0 0 0 2px rgba(124,92,255,.15), 0 10px 24px rgba(0,0,0,.35) inset;
-}
-.brand h1 { font-size: 16px; margin: 0; letter-spacing: .2px; }
-.header a { color: var(--muted); text-decoration: none; }
-.header a:hover { color: var(--ink); }
+  <!-- Hero -->
+  <main class="container">
+    <section class="hero">
+      <h2>Pick 3 mains. Meet your gameplay DNA.</h2>
+      <p class="small">Banter-first, research-grounded reads. Live champion data via Riot Data Dragon.</p>
+    </section>
 
-.hero {
-  display:grid; gap:10px; padding: 18px 0 6px;
-}
-.hero h2 { font-size: 28px; line-height: 1.2; margin: 0; }
-.hero p  { color: var(--muted); margin: 0; }
+    <!-- Wizard Card -->
+    <section id="wizard" class="card reveal" aria-labelledby="inputs-heading">
+      <h3 id="inputs-heading">Inputs</h3>
+      <p class="small">Role → three champions. Autocomplete helps; aliases like “J4”, “Kaisa”, “Velkoz” work.</p>
 
-.grid { display:grid; gap: 14px; grid-template-columns: repeat(2, minmax(0,1fr)); }
-@media (max-width: 720px){ .grid{ grid-template-columns: 1fr; } }
+      <div class="grid" style="margin-top:10px">
+        <label>Role
+          <select id="role" aria-label="Select your role">
+            <option>Jungle</option>
+            <option>Mid</option>
+            <option>Bot</option>
+            <option>Support</option>
+            <option>Top</option>
+          </select>
+        </label>
 
-.card {
-  background: linear-gradient(180deg, var(--elev), var(--panel));
-  border: 1px solid var(--stroke);
-  border-radius: 16px;
-  padding: 18px;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,.02) inset,
-    0 20px 40px rgba(0,0,0,.35);
-  backdrop-filter: saturate(1.1);
-}
-.card h3, .card h2, .card h4 { margin: 0 0 8px 0; }
+        <label>Champion #1
+          <input id="m1" list="champions" placeholder="e.g., Lee Sin" aria-label="Champion one" />
+        </label>
+        <label>Champion #2
+          <input id="m2" list="champions" placeholder="e.g., Kha'Zix" aria-label="Champion two" />
+        </label>
+        <label>Champion #3
+          <input id="m3" list="champions" placeholder="e.g., Sejuani" aria-label="Champion three" />
+        </label>
+      </div>
 
-/* Inputs */
-label { display:grid; gap:6px; font-weight:600; }
-input, select {
-  appearance: none;
-  width: 100%;
-  background: #0c121b;
-  color: var(--ink);
-  border: 1px solid var(--stroke);
-  border-radius: 12px;
-  padding: 10px 12px;
-  outline: none;
-  transition: border .15s, box-shadow .15s, background .2s;
-}
-input::placeholder { color: #6b7a90; }
-input:focus, select:focus {
-  border-color: #2c3c54;
-  box-shadow: 0 0 0 3px rgba(124,92,255,.15);
-  background: #0c131e;
-}
+      <datalist id="champions"></datalist>
 
-/* Buttons */
-.btn {
-  display:inline-flex; align-items:center; gap:8px;
-  background: radial-gradient(90% 140% at 0% 0%, var(--brand), #6b5cff) border-box;
-  border: 1px solid rgba(124,92,255,.35);
-  color: #fff; padding: 11px 14px; border-radius: 12px;
-  cursor: pointer; font-weight: 600;
-  box-shadow: 0 10px 30px rgba(124,92,255,.22);
-  transition: transform .06s ease, filter .2s ease, box-shadow .2s ease;
-}
-.btn:hover { filter: brightness(1.06); }
-.btn:active { transform: translateY(1px); }
-.btn.secondary {
-  background: #0c121b; border-color: var(--stroke); color: var(--ink);
-  box-shadow: none;
-}
+      <div style="display:flex; gap:10px; align-items:center; margin-top:12px">
+        <button id="go" class="btn" type="button" aria-label="Generate persona">Generate Persona</button>
+        <span id="patch" class="badge" aria-live="polite">Patch: —</span>
+      </div>
+    </section>
 
-/* Meta + small */
-.meta { color: var(--muted); font-size: 13px; margin-top: 6px; }
-.small { color: var(--muted); font-size: 12px; }
+    <!-- Results -->
+    <section id="result" class="card reveal" hidden aria-labelledby="result-heading">
+      <div style="display:flex; align-items:baseline; gap:10px">
+        <h3 id="result-heading"><span id="arch">Archetype</span></h3>
+        <span class="badge">Archetype</span>
+      </div>
+      <p id="quip" class="meta"></p>
+      <p class="meta" id="meta"></p>
 
-/* Trait bars */
-.bars { display:grid; gap: 10px; margin-top: 12px; }
-.bar { height: 12px; border-radius: 8px; background: var(--bar-bg); overflow: hidden; position: relative; }
-.bar > i {
-  position:absolute; inset:0 auto 0 0; width: 0%;
-  background: linear-gradient(90deg, var(--brand), var(--brand-2));
-  border-radius: 8px; box-shadow: 0 0 0 1px rgba(124,92,255,.3) inset;
-  transition: width .7s cubic-bezier(.22,1,.36,1);
-}
+      <div id="bars" class="bars"></div>
 
-/* Lists */
-.cols { display:grid; gap:16px; grid-template-columns: repeat(2, minmax(0,1fr)); margin-top: 14px; }
-ul { margin: 8px 0 0; padding-left: 18px; }
-li { margin: 6px 0; }
-.badge {
-  display:inline-block; padding: 4px 8px; border-radius: 999px; font-size: 12px;
-  border: 1px solid var(--stroke); color: var(--muted);
-}
+      <div class="cols">
+        <div>
+          <h4>Strengths</h4>
+          <ul id="strengths"></ul>
+        </div>
+        <div>
+          <h4>Blind Spots</h4>
+          <ul id="blinds"></ul>
+        </div>
+      </div>
+    </section>
 
-/* Footer */
-.foot { opacity: .7; font-size: 12px; padding: 26px 0 40px; }
+    <!-- Debug (toggle visible while tuning) -->
+    <section class="card" id="debug" hidden>
+      <h4 style="margin:0 0 8px 0">Debug</h4>
+      <pre id="dbg"></pre>
+    </section>
+  </main>
 
-/* Debug */
-pre { background:#0c121b; border:1px solid var(--stroke); border-radius:12px; padding:12px; color:#a9b4c4; overflow:auto; }
-#debug { margin-top: 16px; }
+  <footer class="container foot">
+    © LoL Behavior Identifier — arcane vibes, clean code. Powered by Riot Data Dragon.
+  </footer>
+
+  <!-- Your app logic -->
+  <script src="app.js"></script>
+</body>
+</html>
