@@ -4,23 +4,35 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LoL Behavior Identifier</title>
+  <meta name="description" content="Pick 3 mains. Meet your gameplay DNA. Banter-first, research-grounded persona reads powered by Riot Data Dragon." />
   <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='10' ry='10' fill='%23c8aa6e'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='36' font-family='Georgia' fill='%23101318'%3EL%3C/text%3E%3C/svg%3E" />
 </head>
 <body>
-  <header class="nav">
-    <div class="container">
+  <!-- Header -->
+  <header class="header container">
+    <div class="brand">
+      <div class="brand-badge" aria-hidden="true"></div>
       <h1>LoL Behavior Identifier</h1>
     </div>
+    <nav><a href="#wizard">Wizard</a></nav>
   </header>
 
+  <!-- Hero -->
   <main class="container">
-    <section class="card">
+    <section class="hero">
       <h2>Pick 3 mains. Meet your gameplay DNA.</h2>
-      <p class="muted">Role → 3 champions (type to search). Data auto-syncs from Riot Data Dragon.</p>
+      <p class="small">Banter-first, research-grounded reads. Live champion data via Riot Data Dragon.</p>
+    </section>
 
-      <div class="grid">
+    <!-- Wizard Card -->
+    <section id="wizard" class="card reveal" aria-labelledby="inputs-heading">
+      <h3 id="inputs-heading">Inputs</h3>
+      <p class="small">Role → three champions. Autocomplete helps; aliases like “J4”, “Kaisa”, “Velkoz” work.</p>
+
+      <div class="grid" style="margin-top:10px">
         <label>Role
-          <select id="role">
+          <select id="role" aria-label="Select your role">
             <option>Jungle</option>
             <option>Mid</option>
             <option>Bot</option>
@@ -30,25 +42,31 @@
         </label>
 
         <label>Champion #1
-          <input id="m1" list="champions" placeholder="e.g., Lee Sin" />
+          <input id="m1" list="champions" placeholder="e.g., Lee Sin" aria-label="Champion one" />
         </label>
         <label>Champion #2
-          <input id="m2" list="champions" placeholder="e.g., Kha'Zix" />
+          <input id="m2" list="champions" placeholder="e.g., Kha'Zix" aria-label="Champion two" />
         </label>
         <label>Champion #3
-          <input id="m3" list="champions" placeholder="e.g., Sejuani" />
+          <input id="m3" list="champions" placeholder="e.g., Sejuani" aria-label="Champion three" />
         </label>
       </div>
 
       <datalist id="champions"></datalist>
 
-      <button id="go">Generate Persona</button>
-      <small id="patch" class="muted"></small>
+      <div style="display:flex; gap:10px; align-items:center; margin-top:12px">
+        <button id="go" class="btn" type="button" aria-label="Generate persona">Generate Persona</button>
+        <span id="patch" class="badge" aria-live="polite">Patch: —</span>
+      </div>
     </section>
 
-    <section id="result" class="card" hidden>
-      <h3 id="arch"></h3>
-      <p id="quip" class="muted"></p>
+    <!-- Results -->
+    <section id="result" class="card reveal" hidden aria-labelledby="result-heading">
+      <div style="display:flex; align-items:baseline; gap:10px">
+        <h3 id="result-heading"><span id="arch">Archetype</span></h3>
+        <span class="badge">Archetype</span>
+      </div>
+      <p id="quip" class="meta"></p>
       <p class="meta" id="meta"></p>
 
       <div id="bars" class="bars"></div>
@@ -64,9 +82,19 @@
         </div>
       </div>
     </section>
+
+    <!-- Debug (toggle visible while tuning) -->
+    <section class="card" id="debug" hidden>
+      <h4 style="margin:0 0 8px 0">Debug</h4>
+      <pre id="dbg"></pre>
+    </section>
   </main>
 
-  <footer class="container foot">© LoL Behavior Identifier — Banter-first, research-grounded.</footer>
+  <footer class="container foot">
+    © LoL Behavior Identifier — arcane vibes, clean code. Powered by Riot Data Dragon.
+  </footer>
+
+  <!-- Your app logic -->
   <script src="app.js"></script>
 </body>
 </html>
