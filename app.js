@@ -386,24 +386,156 @@ function pickArchetype(t, peak = {}, counts = {}) {
   return ["Calculated Playmaker", "You don’t chase fights—you schedule them."];
 }
 
-// ---------- Copy helpers ----------
-function strengths(t) {
-  const s = [];
-  if (t.ctrl >= 70) s.push("Plays the map, not just the fight.");
-  if (t.team >= 70) s.push("Enables allies—peel, saves, follow-up.");
-  if (t.mech >= 75) s.push("High execution ceiling; timings matter.");
-  if (t.agg >= 72) s.push("Proactive—creates windows rather than waiting.");
-  if (t.adapt >= 68) s.push("Can pivot win-cons mid-game.");
-  return s.slice(0, 3);
+// ---------- Narrative helpers (Barmagly tier) ----------
+function topKeys(obj, n = 3){ return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([k])=>k); }
+function lowKeys(obj, n = 2){ return Object.entries(obj).sort((a,b)=>a[1]-b[1]).slice(0,n).map(([k])=>k); }
+function isHigh(v, t=72){ return v>=t; }
+function isLow(v, t=55){ return v<=t; }
+function anyHigh(t, keys, thr=72){ return keys.some(k => t[k]>=thr); }
+function anyLow(t, keys, thr=55){ return keys.some(k => t[k]<=thr); }
+function sigma(variance){ // rough spikiness
+  const vals = Object.values(variance);
+  const mean = vals.reduce((a,x)=>a+x,0)/vals.length;
+  const sq = vals.reduce((a,x)=>a+(x-mean)*(x-mean),0)/vals.length;
+  return Math.sqrt(sq);
 }
-function blindSpots(t) {
-  const b = [];
-  if (t.risk >= 70 && t.ctrl <= 60) b.push("Flips fights when vision is thin.");
-  if (t.agg >= 75 && t.team <= 55) b.push("Forces plays your team can’t cash.");
-  if (t.ctrl >= 75 && t.agg <= 55) b.push("Over-curates; misses free tempo.");
-  if (t.team >= 80 && t.agg <= 55) b.push("Too selfless; passes agency windows.");
-  return b.slice(0, 3);
+
+function strengths(traits, role, counts, peak){
+  const S = [];
+  const t = traits; // {agg, risk, team, ctrl, mech, adapt}
+  const p = peak || t;
+  const comp = counts || {};
+  const spiky = sigma({ // crude sigma from trait diffs
+    agg: Math.abs(t.agg-60),
+    risk: Math.abs(t.risk-60),
+    team: Math.abs(t.team-60),
+    ctrl: Math.abs(t.ctrl-60),
+    mech: Math.abs(t.mech-60),
+    adapt: Math.abs(t.adapt-60),
+  });
+
+  // 1) Role-first highlights
+  if (role === "Support" && isHigh(t.team, 74) && isHigh(t.ctrl, 72)) {
+    S.push("Reads fights like weather—wards and cooldowns always in forecast.");
+  }
+  if (role === "Jungle" && isHigh(t.ctrl, 72)) {
+    S.push("Turns camps into calendar—objective timers live rent-free in your head.");
+  }
+  if (role === "Mid" && isHigh(t.ctrl, 72) && isHigh(t.mech, 72)) {
+    S.push("Lane pressure translates; you convert prio into plates, heralds, and headaches.");
+  }
+  if (role === "Bot" && isHigh(t.ctrl, 70) && isLow(t.risk, 60)) {
+    S.push("Wave state sommelier—you sip tempo and serve punishments chilled.");
+  }
+  if (role === "Top" && isHigh(t.adapt, 70) && isHigh(t.agg, 70)) {
+    S.push("Side-lane novelist—you write split pressure with impeccable pacing.");
+  }
+
+  // 2) Composition-aware boons
+  if ((comp.Assassin||0) >= 2 && isHigh(t.mech, 72)) {
+    S.push("Fog of war investor—you compound picks into instant map equity.");
+  }
+  if ((comp.Support||0)>=1 && (comp.Marksman||0)>=1 && isHigh(t.ctrl, 70)) {
+    S.push("Backline architect—you blueprint space so carries pay damage rent.");
+  }
+  if ((comp.Tank||0)>=1 && (comp.Support||0)>=1 && isHigh(t.team, 72)) {
+    S.push("Engage orchestra—initiations and peel hit on the same downbeat.");
+  }
+
+  // 3) Peak-aware brag
+  if (p.mech >= 85 && t.mech >= 74) {
+    S.push("Hands verified—toe-taps, buffers, and resets are a second language.");
+  }
+  if (p.ctrl >= 82 && t.ctrl >= 72) {
+    S.push("Map literacy—vision lines and choke points are your playground.");
+  }
+  if (p.agg >= 80 && t.agg >= 72) {
+    S.push("Tempo hunter—you smell a timing window from two lanes away.");
+  }
+
+  // 4) Trait-pattern copy (top bands)
+  const top3 = topKeys(t, 3);
+  if (top3.includes("ctrl") && top3.includes("team")) {
+    S.push("Game feels tidy—fights happen on your marks, not theirs.");
+  }
+  if (top3.includes("agg") && top3.includes("mech")) {
+    S.push("You threaten with both theory and thumbs—prep and pop in one package.");
+  }
+  if (top3.includes("adapt")) {
+    S.push("Win-con pivoting—when the map changes, you already rotated mentally.");
+  }
+
+  // 5) Spikiness (variance) bonus
+  if (spiky >= 10) {
+    S.push("Distinct identity—your pool has a sharp edge and you wield it.");
+  } else {
+    S.push("Balanced toolkit—few hard holes, lots of playable looks.");
+  }
+
+  // De-dupe & cap to 4
+  return Array.from(new Set(S)).slice(0, 4);
 }
+
+function blindSpots(traits, role, counts, peak){
+  const B = [];
+  const t = traits, p = peak||t, comp = counts||{};
+
+  // 1) Role-specific cautions
+  if (role === "Jungle" && isHigh(t.agg, 74) && isLow(t.ctrl, 62)) {
+    B.push("Pathing gets personal—when camps tilt you, objectives miss you.");
+  }
+  if (role === "Support" && isHigh(t.team, 80) && isLow(t.agg, 58)) {
+    B.push("Too polite—handing out shields when it’s time to pull the trigger.");
+  }
+  if (role === "Mid" && isHigh(t.mech, 75) && isLow(t.team, 60)) {
+    B.push("Montage tax—chasing clip moments while side lanes file complaints.");
+  }
+  if (role === "Bot" && isLow(t.risk, 55) && isLow(t.agg, 60)) {
+    B.push("Safety addiction—free punish windows pass like a breeze.");
+  }
+  if (role === "Top" && isHigh(t.agg, 74) && isLow(t.team, 58)) {
+    B.push("Teleport FOMO—side quests over main objectives.");
+  }
+
+  // 2) Composition pitfalls
+  if ((comp.Assassin||0) >= 2 && isLow(t.ctrl, 66)) {
+    B.push("Double knives, single plan—no scaffolding when picks don’t stick.");
+  }
+  if ((comp.Marksman||0)>=1 && (comp.Support||0)>=1 && isLow(t.risk, 58)) {
+    B.push("Over-insurance—you underwrite fights you could just win.");
+  }
+  if ((comp.Tank||0)>=1 && (comp.Support||0)>=1 && isLow(t.agg, 60)) {
+    B.push("All setup, no swing—the green light turns yellow too often.");
+  }
+
+  // 3) Peak vs average mismatch
+  if (p.mech >= 85 && t.ctrl <= 62) {
+    B.push("Hands outrun map—mechanics cash checks macro hasn’t signed.");
+  }
+  if (p.agg >= 80 && t.team <= 58) {
+    B.push("Solo agency tax—team can’t validate your reads on time.");
+  }
+
+  // 4) Trait-pattern cautions
+  if (isHigh(t.ctrl, 75) && isLow(t.agg, 58)) {
+    B.push("Over-curation—sometimes a good fight is an early one.");
+  }
+  if (isHigh(t.agg, 75) && isLow(t.ctrl, 60)) {
+    B.push("Red-light runner—vision tickets are piling up.");
+  }
+  if (isHigh(t.team, 80) && isLow(t.adapt, 60)) {
+    B.push("Playbook loyalist—struggles to rewrite the plan mid-game.");
+  }
+
+  // 5) General guardrails
+  if (isHigh(t.risk, 72) && isLow(t.ctrl, 60)) {
+    B.push("Coin-flip equity—fun when ahead, unforgiving when even.");
+  }
+
+  // De-dupe & cap to 4
+  return Array.from(new Set(B)).slice(0, 4);
+}
+
 
 // ---------- DDragon load ----------
 async function loadChampions() {
@@ -464,6 +596,13 @@ async function onGo() {
   const vecs = mains.map((name) => championTraits(name, role));
   const { avg: traits, peak, counts } = applyRoleWeights(role, vecs);
   const [arch, quip] = pickArchetype(traits, peak, counts);
+
+// strengths / blind spots (new signatures)
+const S = strengths(traits, role, counts, peak);
+const B = blindSpots(traits, role, counts, peak);
+
+$("#strengths").innerHTML = S.map(x => `<li>${x}</li>`).join("");
+$("#blinds").innerHTML = B.map(x => `<li>${x}</li>`).join("");
 
   // Render
   $("#arch").textContent = arch;
