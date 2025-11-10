@@ -400,140 +400,141 @@ function sigma(variance){ // rough spikiness
   return Math.sqrt(sq);
 }
 
-function strengths(traits, role, counts, peak){
-  const S = [];
-  const t = traits; // {agg, risk, team, ctrl, mech, adapt}
-  const p = peak || t;
-  const comp = counts || {};
-  const spiky = sigma({ // crude sigma from trait diffs
-    agg: Math.abs(t.agg-60),
-    risk: Math.abs(t.risk-60),
-    team: Math.abs(t.team-60),
-    ctrl: Math.abs(t.ctrl-60),
-    mech: Math.abs(t.mech-60),
-    adapt: Math.abs(t.adapt-60),
-  });
+// ---------- Psychological Assessment (Barmagly, non-diagnostic) ----------
+// This layer maps gameplay traits -> dispositional signals inspired by:
+// Big Five (O-C-E-A-N), Agency vs Communion, Risk Tolerance,
+// Locus of Control, Planning vs Improvisation, Competitive Drive, Tilt Resistance.
+// Output: two arrays to render into Strengths / Blind Spots sections with richer, research-style copy.
 
-  // 1) Role-first highlights
-  if (role === "Support" && isHigh(t.team, 74) && isHigh(t.ctrl, 72)) {
-    S.push("Reads fights like weather—wards and cooldowns always in forecast.");
-  }
-  if (role === "Jungle" && isHigh(t.ctrl, 72)) {
-    S.push("Turns camps into calendar—objective timers live rent-free in your head.");
-  }
-  if (role === "Mid" && isHigh(t.ctrl, 72) && isHigh(t.mech, 72)) {
-    S.push("Lane pressure translates; you convert prio into plates, heralds, and headaches.");
-  }
-  if (role === "Bot" && isHigh(t.ctrl, 70) && isLow(t.risk, 60)) {
-    S.push("Wave state sommelier—you sip tempo and serve punishments chilled.");
-  }
-  if (role === "Top" && isHigh(t.adapt, 70) && isHigh(t.agg, 70)) {
-    S.push("Side-lane novelist—you write split pressure with impeccable pacing.");
-  }
+function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+function pct(x){ return Math.round(clamp01(x) * 100); }
+const norm = (x, lo=40, hi=80) => clamp01((x - lo) / (hi - lo)); // maps ~40-80 into 0..1 band
+const inv  = (v) => clamp01(1 - v);
 
-  // 2) Composition-aware boons
-  if ((comp.Assassin||0) >= 2 && isHigh(t.mech, 72)) {
-    S.push("Fog of war investor—you compound picks into instant map equity.");
-  }
-  if ((comp.Support||0)>=1 && (comp.Marksman||0)>=1 && isHigh(t.ctrl, 70)) {
-    S.push("Backline architect—you blueprint space so carries pay damage rent.");
-  }
-  if ((comp.Tank||0)>=1 && (comp.Support||0)>=1 && isHigh(t.team, 72)) {
-    S.push("Engage orchestra—initiations and peel hit on the same downbeat.");
-  }
+// Role emphasis (weights nudge interpretation without changing raw trait bars)
+const ROLE_EMPH = {
+  Jungle:  { agency:1.06, communion:1.02, planning:1.05 },
+  Support: { agency:0.96, communion:1.10, planning:1.06 },
+  Mid:     { agency:1.05, communion:1.00, planning:1.03 },
+  Bot:     { agency:1.02, communion:1.04, planning:1.04 },
+  Top:     { agency:1.04, communion:0.98, planning:1.03 },
+};
 
-  // 3) Peak-aware brag
-  if (p.mech >= 85 && t.mech >= 74) {
-    S.push("Hands verified—toe-taps, buffers, and resets are a second language.");
-  }
-  if (p.ctrl >= 82 && t.ctrl >= 72) {
-    S.push("Map literacy—vision lines and choke points are your playground.");
-  }
-  if (p.agg >= 80 && t.agg >= 72) {
-    S.push("Tempo hunter—you smell a timing window from two lanes away.");
-  }
+// Derive psychological axes 0..1 from trait vector (role-aware, composition-aware)
+function derivePsyAxes(tr, role, counts={}, peak={}, variance={}){
+  const t = tr;
 
-  // 4) Trait-pattern copy (top bands)
-  const top3 = topKeys(t, 3);
-  if (top3.includes("ctrl") && top3.includes("team")) {
-    S.push("Game feels tidy—fights happen on your marks, not theirs.");
-  }
-  if (top3.includes("agg") && top3.includes("mech")) {
-    S.push("You threaten with both theory and thumbs—prep and pop in one package.");
-  }
-  if (top3.includes("adapt")) {
-    S.push("Win-con pivoting—when the map changes, you already rotated mentally.");
-  }
+  // Core latent mixes (pre-role)
+  const Agency       = clamp01(0.42*norm(t.agg) + 0.28*norm(t.mech) + 0.18*norm(peak.agg||t.agg) + 0.12*norm(peak.mech||t.mech));
+  const Communion    = clamp01(0.48*norm(t.team) + 0.32*norm(t.ctrl) + 0.12*inv(norm(t.agg)) + 0.08*inv(norm(t.risk)));
+  const RiskTol      = clamp01(0.60*norm(t.risk) + 0.25*norm(t.agg) - 0.15*norm(t.ctrl) + 0.05*norm(peak.risk||t.risk));
+  const Planning     = clamp01(0.55*norm(t.ctrl) + 0.25*inv(norm(t.risk)) + 0.15*norm(t.team) + 0.05*inv(norm(variance.ctrl||10)));
+  const Improvis     = clamp01(0.50*norm(t.adapt) + 0.25*norm(t.agg) + 0.15*norm(t.risk) - 0.10*norm(t.ctrl));
+  const CompeteDrive = clamp01(0.45*norm(t.agg) + 0.35*norm(t.mech) + 0.20*norm(peak.mech||t.mech));
+  const EmoStability = clamp01(0.45*norm(t.ctrl) + 0.25*inv(norm(t.risk)) + 0.20*norm(t.team) + 0.10*inv(norm(variance.risk||10)));
+  const Openness     = clamp01(0.55*norm(t.adapt) + 0.25*norm(t.mech) + 0.20*Improvis);     // curiosity/novelty/pivot
+  const Conscient    = clamp01(0.58*Planning + 0.22*norm(t.ctrl) + 0.20*inv(Improvis));     // organization/discipline
+  const Extrav       = clamp01(0.46*norm(t.agg) + 0.24*RiskTol + 0.15*norm(t.team) + 0.15*norm(peak.agg||t.agg));
+  const Agreeable    = clamp01(0.52*norm(t.team) + 0.28*norm(t.ctrl) - 0.20*norm(t.agg));
+  const HonHum       = clamp01(0.40*inv(RiskTol) + 0.35*Agreeable + 0.25*norm(t.team));     // HEXACO Honesty-Humility proxy
+  const LocusControl = clamp01(0.62*norm(t.ctrl) + 0.20*Agency - 0.18*RiskTol);             // internal vs external
 
-  // 5) Spikiness (variance) bonus
-  if (spiky >= 10) {
-    S.push("Distinct identity—your pool has a sharp edge and you wield it.");
-  } else {
-    S.push("Balanced toolkit—few hard holes, lots of playable looks.");
-  }
+  // Composition nudges (double assassins, enchanter+adc, etc.)
+  const assassins2 = (counts.Assassin||0) >= 2;
+  const enchanterADC = (counts.Support||0)>=1 && (counts.Marksman||0)>=1;
+  const tankSupport = (counts.Tank||0)>=1 && (counts.Support||0)>=1;
 
-  // De-dupe & cap to 4
-  return Array.from(new Set(S)).slice(0, 4);
+  let A = Agency, C = Communion, P = Planning, R = RiskTol, I = Improvis, CD=CompeteDrive, ES=EmoStability,
+      O = Openness, CO=Conscient, EX=Extrav, AG=Agreeable, HH=HonHum, LOC=LocusControl;
+
+  if (assassins2){ A+=0.04; R+=0.05; CD+=0.04; P-=0.03; }
+  if (enchanterADC){ C+=0.06; P+=0.03; R-=0.03; }
+  if (tankSupport){ C+=0.05; P+=0.05; EX-=0.01; }
+
+  // Role emphasis
+  const emph = ROLE_EMPH[role] || { agency:1, communion:1, planning:1 };
+  A = clamp01(A*emph.agency); C = clamp01(C*emph.communion); P = clamp01(P*emph.planning);
+
+  return {
+    Agency:A, Communion:C, RiskTolerance:R, Planning:P, Improvisation:I, CompetitiveDrive:CD,
+    EmotionalStability:ES, Openness:O, Conscientiousness:CO, Extraversion:EX, Agreeableness:AG,
+    HonestyHumility:HH, LocusOfControl:LOC
+  };
 }
 
-function blindSpots(traits, role, counts, peak){
-  const B = [];
-  const t = traits, p = peak||t, comp = counts||{};
+// Rich narrative (keeps wit; avoids medical/clinical language)
+function psychNarrative(axes, role){
+  const s = [], b = [];
+  const asPct = (k)=>pct(axes[k]);
 
-  // 1) Role-specific cautions
-  if (role === "Jungle" && isHigh(t.agg, 74) && isLow(t.ctrl, 62)) {
-    B.push("Pathing gets personal—when camps tilt you, objectives miss you.");
-  }
-  if (role === "Support" && isHigh(t.team, 80) && isLow(t.agg, 58)) {
-    B.push("Too polite—handing out shields when it’s time to pull the trigger.");
-  }
-  if (role === "Mid" && isHigh(t.mech, 75) && isLow(t.team, 60)) {
-    B.push("Montage tax—chasing clip moments while side lanes file complaints.");
-  }
-  if (role === "Bot" && isLow(t.risk, 55) && isLow(t.agg, 60)) {
-    B.push("Safety addiction—free punish windows pass like a breeze.");
-  }
-  if (role === "Top" && isHigh(t.agg, 74) && isLow(t.team, 58)) {
-    B.push("Teleport FOMO—side quests over main objectives.");
-  }
+  // Core pair: Agency vs Communion
+  if (axes.Agency >= .72 && axes.Communion >= .68)
+    s.push("High agency, high communion — you take charge and still play for the room.");
+  else if (axes.Agency >= .72)
+    s.push("Decisive agency — you set tempo and make the map answer you.");
+  else if (axes.Communion >= .72)
+    s.push("High communion — you read the squad and sequence plays that make others shine.");
 
-  // 2) Composition pitfalls
-  if ((comp.Assassin||0) >= 2 && isLow(t.ctrl, 66)) {
-    B.push("Double knives, single plan—no scaffolding when picks don’t stick.");
-  }
-  if ((comp.Marksman||0)>=1 && (comp.Support||0)>=1 && isLow(t.risk, 58)) {
-    B.push("Over-insurance—you underwrite fights you could just win.");
-  }
-  if ((comp.Tank||0)>=1 && (comp.Support||0)>=1 && isLow(t.agg, 60)) {
-    B.push("All setup, no swing—the green light turns yellow too often.");
-  }
+  if (axes.Agency >= .75 && axes.Communion <= .50)
+    b.push("Agency overspill — teammates can lag behind your calls; add one extra beat for sync.");
+  if (axes.Communion >= .78 && axes.Agency <= .55)
+    b.push("Under-claiming windows — great setups, sometimes not enough trigger.");
 
-  // 3) Peak vs average mismatch
-  if (p.mech >= 85 && t.ctrl <= 62) {
-    B.push("Hands outrun map—mechanics cash checks macro hasn’t signed.");
-  }
-  if (p.agg >= 80 && t.team <= 58) {
-    B.push("Solo agency tax—team can’t validate your reads on time.");
-  }
+  // Big-Five-ish lenses
+  if (axes.Conscientiousness >= .70 && axes.Planning >= .70)
+    s.push("Structured execution — timers, waves, and tools line up like a checklist.");
+  if (axes.Openness >= .70 && axes.Improvisation >= .65)
+    s.push("Adaptive thinker — you rewrite win-cons mid-game without losing the thread.");
+  if (axes.Extraversion >= .68 && axes.RiskTolerance >= .66)
+    s.push("Bold presence — you create interaction instead of waiting for it.");
 
-  // 4) Trait-pattern cautions
-  if (isHigh(t.ctrl, 75) && isLow(t.agg, 58)) {
-    B.push("Over-curation—sometimes a good fight is an early one.");
-  }
-  if (isHigh(t.agg, 75) && isLow(t.ctrl, 60)) {
-    B.push("Red-light runner—vision tickets are piling up.");
-  }
-  if (isHigh(t.team, 80) && isLow(t.adapt, 60)) {
-    B.push("Playbook loyalist—struggles to rewrite the plan mid-game.");
-  }
+  if (axes.Conscientiousness <= .50 && axes.Improvisation >= .68)
+    b.push("Loose scaffolding — creative lines need a tad more setup to convert reliably.");
+  if (axes.Openness <= .45 && axes.Planning >= .70)
+    b.push("Playbook gravity — solid macro, but novelty windows may slide by.");
+  if (axes.RiskTolerance >= .74 && axes.EmotionalStability <= .58)
+    b.push("Arousal spikes — coin-flip appetite rises as games heat up; breathe then greenlight.");
 
-  // 5) General guardrails
-  if (isHigh(t.risk, 72) && isLow(t.ctrl, 60)) {
-    B.push("Coin-flip equity—fun when ahead, unforgiving when even.");
-  }
+  // Social style
+  if (axes.Agreeableness >= .72 && axes.HonestyHumility >= .65)
+    s.push("Prosocial glue — fair trading, clean peel, and low ego in high-leverage moments.");
+  if (axes.Agreeableness <= .50 && axes.Agency >= .70)
+    b.push("Blunt edges — clarity is great; soften timing language to preserve follow through.");
 
-  // De-dupe & cap to 4
-  return Array.from(new Set(B)).slice(0, 4);
+  // Control beliefs
+  if (axes.LocusOfControl >= .70)
+    s.push("Internal locus — you assume control is available and you go find it.");
+  else if (axes.LocusOfControl <= .45)
+    b.push("External drag — when tempo slips, confidence follows; re-anchor on the next controllable.")
+
+  // Role-specific polish
+  if (role==="Jungle" && axes.Planning>=.70 && axes.Agency>=.68)
+    s.push("Pathing authority — you route fights into objectives rather than the other way around.");
+  if (role==="Support" && axes.Communion>=.75 && axes.Planning>=.68)
+    s.push("Field marshal support — vision, spacing, and saves arrive on time and on purpose.");
+  if (role==="Mid" && axes.Openness>=.70 && axes.CompetitiveDrive>=.66)
+    s.push("Midlane editor — you turn pressure into paragraphs: roams, plates, and prio handoffs.");
+  if (role==="Bot" && axes.Planning>=.68 && axes.LocusOfControl>=.66)
+    s.push("Win-more manager — you ladder lane states into safe herald/dragon claims.");
+  if (role==="Top" && axes.Agency>=.70 && axes.Openness>=.65)
+    s.push("Split author — you write side-lane chapters that force global responses.");
+
+  // Cap / dedupe
+  const dedupe = (arr) => Array.from(new Set(arr));
+  return {
+    strengths: dedupe(s).slice(0,4).map(line => `**${line}**`),
+    blindspots: dedupe(b).slice(0,4)
+  };
+}
+
+// Glue: compute axes -> strengths/blindspots for rendering into existing lists
+function strengths(traits, role, counts, peak, variance){
+  const axes = derivePsyAxes(traits, role, counts, peak, variance);
+  return psychNarrative(axes, role).strengths;
+}
+function blindSpots(traits, role, counts, peak, variance){
+  const axes = derivePsyAxes(traits, role, counts, peak, variance);
+  return psychNarrative(axes, role).blindspots;
 }
 
 
@@ -594,15 +595,16 @@ async function onGo() {
 
   // Compute vectors
   const vecs = mains.map((name) => championTraits(name, role));
-  const { avg: traits, peak, counts } = applyRoleWeights(role, vecs);
+const { avg: traits, peak, counts, variance } = applyRoleWeights(role, vecs);
   const [arch, quip] = pickArchetype(traits, peak, counts);
 
 // strengths / blind spots (new signatures)
-const S = strengths(traits, role, counts, peak);
-const B = blindSpots(traits, role, counts, peak);
+const S = strengths(traits, role, counts, peak, variance);
+const B = blindSpots(traits, role, counts, peak, variance);
 
-$("#strengths").innerHTML = S.map(x => `<li>${x}</li>`).join("");
-$("#blinds").innerHTML = B.map(x => `<li>${x}</li>`).join("");
+   // Simple markdown-ish bold for strengths
+$("#strengths").innerHTML = S.map(x => `<li>${x.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</li>`).join("");
+$("#blinds").innerHTML    = B.map(x => `<li>${x}</li>`).join("");
 
   // Render
   $("#arch").textContent = arch;
